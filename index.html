@@ -21,12 +21,18 @@
             <ul>
                 <li><a href="#" id="link-mappa">Mappa</a></li>
                 <li><a href="#" id="link-segnala">Segnala</a></li>
-                <li> <a href="login.html">Accedi</a></li>
-                <li> <a href="register.html">Registrati</a></li>
             </ul>
         </nav>
     </header>
 <main>
+         <section id="box-accesso" class="card-accesso">
+             <h3>Inizia a usare Aegis</h3>
+             <p>Accedi o crea un account per inviare segnalazioni in tempo reale.</p>
+             <div class="pulsanti-accesso">
+                <a href="login.html" class="btn-primario">Accedi</a>
+                <a href="register.html" class="btn-secondario">Registrati</a>
+            </div>
+        </section>
            <section id="sezione-mappa" hidden>
            <h2>Mappa e stato
             dell'accessibilità</h2>
@@ -37,12 +43,19 @@
          </form>
 
         <div id="map"></div>
-    </section>
+   </section>
             <section id="sezione-segnala" hidden>
             <h2>Segnala un guasto o una barriera</h2>
             <form method="POST">
-                <label for="stazione">Nome della stazione</label>
-                <input type="text" id="stazione" name="stazione" required>
+                 <label for="stazione">Seleziona la stazione</label>
+          <select id="stazione" name="stazione" required>
+              <option value="">-- Scegli una stazione --</option>
+              <option value="garibaldi">Napoli Garibaldi</option>
+              <option value="toledo">Toledo (Linea 1)</option>
+              <option value="mergellina">Mergellina</option>
+              <option value="altro">Altro (specifica)</option>
+  </select>
+               <input type="text" id="stazione-altro" name="stazione_altro" placeholder="Scrivi il nome della stazione" hidden>
 
                 <label for="descrizione">Descrizione del problema</label>
                 <textarea id="descrizione" name="descrizione" required></textarea>
