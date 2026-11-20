@@ -38,7 +38,8 @@
             dell'accessibilità</h2>
          <form method="GET">
             <label for="cerca-stazione">Cerca stazione o fermata</label>
-            <input type="search" id="cerca-stazione" name="q" placeholder="Es. Napoli Garibaldi">
+            <input type="search" id="cerca-stazione" name="q" list="lista-stazione" placeholder="Es. Napoli Garibaldi" autocomplete="off">
+             <datalist id="lista-stazioni"></datalist>
             <button type="submit">Cerca</button>
          </form>
 

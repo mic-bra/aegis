@@ -20,7 +20,7 @@ linkSegnala.addEventListener("click", function (event) {
     sezioneMappa.hidden = true;
     sezioneSegnala.hidden = false;
 });
-// Gestione opzione "Altro" nel menu a tendina del form
+
 const selectStazione = document.getElementById("stazione");
 const inputAltro = document.getElementById("stazione-altro");
 
@@ -34,13 +34,24 @@ selectStazione.addEventListener("change", function () {
     }
 });
 
-// Elenco stazioni e segnaposto sulla mappa
 const stazioni = [
     {
         nome: "Napoli Garibaldi",
         lat: 40.8529,
         lng: 14.2722,
         stato: "Guasto: ascensore binario 2 fuori servizio"
+    },
+    {
+        nome: "Napoli Gianturco",
+        lat: 40.8535,
+        lng: 14.2878,
+        stato: "Accessibile: rampe e percorsi tattili attivi"
+    },
+    {
+        nome: "Napoli Montesanto",
+        lat: 40.8473,
+        lng: 14.2448,
+        stato: "Attenzione: montascale in manutenzione"
     },
     {
         nome: "Toledo (Linea 1)",
@@ -53,11 +64,69 @@ const stazioni = [
         lat: 40.8288,
         lng: 14.2215,
         stato: "Accessibile: percorso senza barriere attivo"
+    },
+    {
+        nome: "Roma Termini",
+        lat: 41.9010,
+        lng: 12.5018,
+        stato: "Accessibile: assistenza Sala Blu e ascensori attivi"
+    },
+    {
+        nome: "Milano Centrale",
+        lat: 45.4861,
+        lng: 9.2040,
+        stato: "Guasto: ascensore binario 10 temporaneamente fermo"
+    },
+    {
+        nome: "Firenze Santa Maria Novella",
+        lat: 43.7764,
+        lng: 11.2478,
+        stato: "Accessibile: percorsi a raso e servizi attivi"
     }
 ];
 
+const datalistaStazioni= document.getElementById("lista-stazioni");
+
+stazioni.forEach(function(stazione){
+    stazione.marker= L.marker([stazione.lat,stazione.lng])
+        .addTo(map)
+        .bindPopup(`<strong>${stazione.nome}</strong><br&{stazione.stato}`);
+
+  if(datalistaStazioni){
+      const opzione = document.createElement("option");
+      opzione.value = stazione.nome;
+      datalistaStazioni.appendiChiId(opzione);
+  }
+});
+
+const formRicerca= document.querySelector("#sezione-mappa form")
+const inputRicerca= document.getElementById("cerca-stazione");   //prendere un elemento tramite id
+
 stazioni.forEach(function (stazione) {
-    L.marker([stazione.lat, stazione.lng])
+    stazione.marker = L.marker([stazione.lat, stazione.lng])
         .addTo(map)
         .bindPopup(`<strong>${stazione.nome}</strong><br>${stazione.stato}`);
+});
+
+formRicerca.addEventListener("submit", function (event) {
+    event.preventDefault();
+   const testoCercato = inputRicerca.value.trim().toLowerCase();
+    if (testoCercato === "") return;
+
+    let trovata = false;
+
+    for (let i = 0; i < stazioni.length; i++) {
+        let nomeStazione = stazioni[i].nome.toLowerCase();
+
+        if (nomeStazione.includes(testoCercato)) {
+           map.setView([stazioni[i].lat, stazioni[i].lng], 16);
+            stazioni[i].marker.openPopup();
+          trovata = true;
+            break;
+        }
+    }
+
+    if (!trovata) {
+        alert("Nessuna stazione trovata. Prova con Garibaldi, Toledo o Mergellina.");
+    }
 });
