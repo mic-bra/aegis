@@ -2,8 +2,7 @@
     width: 180px;
     height: auto;
     display: block;
-    margin-left: 39%;
-    margin-top: 35px;
+    margin: 35px auto 0;
 }
 .card-accesso {
     background-color: #ffffff;
@@ -28,11 +27,13 @@
     text-decoration: none;
     font-weight: bold;
     display: inline-block;
+    cursor: pointer;
 }
 
 .btn-primario {
     background-color: #0b2e59;
     color: #ffffff;
+    border: none;
 }
 
 .btn-secondario {
@@ -40,6 +41,12 @@
     color: #0b2e59;
     border: 2px solid #0b2e59;
 }
+
+#messaggio-errore {
+    color: #b00020;
+    font-weight: bold;
+}
+
 header {
     text-align: center;
 }
@@ -60,17 +67,18 @@ form {
     width: 100%;
 }
 
-nav {
-    position: absolute;
-    top: 20px;
-    right: 30px;
+@media (max-width: 600px) {
+    #map{
+        height: 350px;
+    }
 }
 
 nav ul {
-    list-style: none;
     display: flex;
-    gap: 20px;
-    margin: 0;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    list-style: none;
     padding: 0;
 }
 

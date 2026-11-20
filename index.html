@@ -11,51 +11,54 @@
 </head>
 <body>
     <header>
-              <img src="images/logo.png" alt="Logo Aegis" class="logo">
-              <h1>Aegis</h1>
-           <h2>Own your path</h2>
-           <p>Segnalazione e monitoraggio
-              dell'accessibilità nelle stazioni e nei trasporti
-               pubblici</p>
+        <img src="images/logo.png" alt="Logo Aegis" class="logo">
+        <h1>Aegis</h1>
+        <h2>Own your path</h2>
+        <p>Segnalazione e monitoraggio
+           dell'accessibilità nelle stazioni e nei trasporti
+           pubblici</p>
         <nav>
             <ul>
                 <li><a href="#" id="link-mappa">Mappa</a></li>
                 <li><a href="#" id="link-segnala">Segnala</a></li>
+                <li id="voce-esci" hidden><a href="#" id="btn-esci">Esci</a></li>   <!-- visibile solo se loggato -->
             </ul>
         </nav>
     </header>
-<main>
-         <section id="box-accesso" class="card-accesso">
-             <h3>Inizia a usare Aegis</h3>
-             <p>Accedi o crea un account per inviare segnalazioni in tempo reale.</p>
-             <div class="pulsanti-accesso">
+    <main>
+        <section id="box-accesso" class="card-accesso">
+            <h3>Inizia a usare Aegis</h3>
+            <p>Accedi o crea un account per inviare segnalazioni in tempo reale.</p>
+            <div class="pulsanti-accesso">
                 <a href="login.html" class="btn-primario">Accedi</a>
                 <a href="register.html" class="btn-secondario">Registrati</a>
             </div>
         </section>
-           <section id="sezione-mappa" hidden>
-           <h2>Mappa e stato
-            dell'accessibilità</h2>
-         <form method="GET">
-            <label for="cerca-stazione">Cerca stazione o fermata</label>
-            <input type="search" id="cerca-stazione" name="q" placeholder="Es. Napoli Garibaldi">
-            <button type="submit">Cerca</button>
-         </form>
 
-        <div id="map"></div>
-   </section>
-            <section id="sezione-segnala" hidden>
+        <section id="sezione-mappa" hidden>
+            <h2>Mappa e stato dell'accessibilità</h2>
+            <form method="GET">
+                <label for="cerca-stazione">Cerca stazione o fermata</label>
+                <input type="search" id="cerca-stazione" name="q" list="lista-stazioni" placeholder="Es. Napoli Garibaldi" autocomplete="off">
+                <datalist id="lista-stazioni"></datalist>
+                <button type="submit">Cerca</button>
+            </form>
+
+            <div id="map"></div>
+        </section>
+
+        <section id="sezione-segnala" hidden>
             <h2>Segnala un guasto o una barriera</h2>
             <form method="POST">
-                 <label for="stazione">Seleziona la stazione</label>
-          <select id="stazione" name="stazione" required>
-              <option value="">-- Scegli una stazione --</option>
-              <option value="garibaldi">Napoli Garibaldi</option>
-              <option value="toledo">Toledo (Linea 1)</option>
-              <option value="mergellina">Mergellina</option>
-              <option value="altro">Altro (specifica)</option>
-  </select>
-               <input type="text" id="stazione-altro" name="stazione_altro" placeholder="Scrivi il nome della stazione" hidden>
+                <label for="stazione">Seleziona la stazione</label>
+                <select id="stazione" name="stazione" required>
+                    <option value="">-- Scegli una stazione --</option>
+                    <option value="garibaldi">Napoli Garibaldi</option>
+                    <option value="toledo">Toledo (Linea 1)</option>
+                    <option value="mergellina">Mergellina</option>
+                    <option value="altro">Altro (specifica)</option>
+                </select>
+                <input type="text" id="stazione-altro" name="stazione_altro" placeholder="Scrivi il nome della stazione" hidden>
 
                 <label for="descrizione">Descrizione del problema</label>
                 <textarea id="descrizione" name="descrizione" required></textarea>
