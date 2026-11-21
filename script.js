@@ -140,3 +140,13 @@ formRicerca.addEventListener("submit", function (event) {
         alert("Nessuna stazione trovata. Prova con Garibaldi, Toledo o Mergellina.");
     }
 });
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      await navigator.serviceWorker.register('./sw.js');
+      console.log('Service Worker registrato con successo');
+    } catch (errore) {
+      console.error('Errore nella registrazione del Service Worker:', errore);
+    }
+  });
+}
