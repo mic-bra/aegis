@@ -22,7 +22,8 @@
             <ul>
                 <li><a href="#" id="link-mappa">Mappa</a></li>
                 <li><a href="#" id="link-segnala">Segnala</a></li>
-                <li id="voce-esci" hidden><a href="#" id="btn-esci">Esci</a></li>   <!-- visibile solo se loggato -->
+                <li><a href="#" id="link-notizie">Notizie</a></li>
+                <li id="voce-esci" hidden><a href="#" id="btn-esci">Logout</a></li>   <!-- visibile solo se loggato -->
             </ul>
         </nav>
     </header>
@@ -50,7 +51,8 @@
 
         <section id="sezione-segnala" hidden>
             <h2>Segnala un guasto o una barriera</h2>
-            <form method="POST">
+            <p id="avviso-accesso" hidden>Per inviare una segnalazione devi <a href="login.html">accedere</a> o <a href="register.html">registrarti</a>.</p>
+            <form id="form-segnala" method="POST">
                 <label for="stazione">Seleziona la stazione</label>
                 <select id="stazione" name="stazione" required>
                     <option value="">-- Scegli una stazione --</option>
@@ -64,8 +66,14 @@
                 <label for="descrizione">Descrizione del problema</label>
                 <textarea id="descrizione" name="descrizione" required></textarea>
 
-                <button type="submit">Invia segnalazione</button>
+                <button type="submit" id="btn-invia">Invia segnalazione</button>
             </form>
+        </section>
+
+        <section id="sezione-notizie" hidden>
+            <h2>Notizie dalla community</h2>
+            <p id="stato-bacheca" aria-live="polite"></p>   <!-- dice quante segnalazioni ci sono (letto dallo screen reader quando cambia) -->
+            <div id="bacheca" class="bacheca" tabindex="0" aria-label="Bacheca delle segnalazioni"></div>
         </section>
     </main>
 

@@ -24,9 +24,13 @@ const linkSegnala = document.getElementById("link-segnala");
 const sezioneMappa = document.getElementById("sezione-mappa");
 const sezioneSegnala = document.getElementById("sezione-segnala");
 
+const linkNotizie = document.getElementById("link-notizie");
+const sezioneNotizie = document.getElementById("sezione-notizie");
+
 linkMappa.addEventListener("click", function (event) {
     event.preventDefault();
     sezioneSegnala.hidden = true;
+    sezioneNotizie.hidden = true;
     sezioneMappa.hidden = false;
     map.invalidateSize();
 });
@@ -34,7 +38,16 @@ linkMappa.addEventListener("click", function (event) {
 linkSegnala.addEventListener("click", function (event) {
     event.preventDefault();
     sezioneMappa.hidden = true;
+    sezioneNotizie.hidden = true;
     sezioneSegnala.hidden = false;
+});
+
+linkNotizie.addEventListener("click", function (event) {
+    event.preventDefault();
+    sezioneMappa.hidden = true;
+    sezioneSegnala.hidden = true;
+    sezioneNotizie.hidden = false;
+    aggiornaBacheca();   //aggiorna subito la bacheca
 });
 
 const selectStazione = document.getElementById("stazione");
@@ -140,6 +153,100 @@ formRicerca.addEventListener("submit", function (event) {
         alert("Nessuna stazione trovata. Prova con Garibaldi, Toledo o Mergellina.");
     }
 });
+const formSegnala = document.getElementById("form-segnala");
+const textareaDescrizione = document.getElementById("descrizione");
+const avvisoAccesso = document.getElementById("avviso-accesso");
+const bottoneInvia = document.getElementById("btn-invia");
+const bacheca = document.getElementById("bacheca");
+const statoBacheca = document.getElementById("stato-bacheca");
+let ultimoContenuto = null;   //ricorda cosa c'era l'ultima volta, per ridisegnare solo se cambia
+
+if (utenteLoggato === null) {
+    avvisoAccesso.hidden = false;    //spiega perché non si può inviare segnalaziome
+    bottoneInvia.disabled = true;    //blocca il pulsante
+}
+
+formSegnala.addEventListener("submit", function (event) {
+    event.preventDefault();
+    if (utenteLoggato === null) return;
+
+    let nomeStazione;
+    if (selectStazione.value === "altro") {
+        nomeStazione = inputAltro.value.trim();
+    } else {
+        nomeStazione = selectStazione.options[selectStazione.selectedIndex].text;
+    }
+    const descrizione = textareaDescrizione.value.trim();
+    if (nomeStazione === "" || descrizione === "") return;
+
+    const nuovaSegnalazione = {
+        utente: utenteLoggato.nome + " " + utenteLoggato.cognome.charAt(0) + ".",
+        stazione: nomeStazione,
+        descrizione: descrizione,
+        data: Date.now()      //data e ora in millisecondi
+    };
+
+    const segnalazioni = JSON.parse(localStorage.getItem("segnalazioni")) || [];
+    segnalazioni.unshift(nuovaSegnalazione); //unshift = la mette per prima
+    localStorage.setItem("segnalazioni", JSON.stringify(segnalazioni));
+
+    formSegnala.reset();//svuota il form
+    inputAltro.hidden = true;
+    inputAltro.required = false;
+
+    aggiornaBacheca();
+    sezioneSegnala.hidden = true; //mostra subito la bacheca con la nuova segnalazione
+    sezioneNotizie.hidden = false;
+});
+
+function aggiornaBacheca() {
+    const salvato = localStorage.getItem("segnalazioni") || "[]";
+    if (salvato === ultimoContenuto) return;//nulla di nuovo: non ridisegna
+    ultimoContenuto = salvato;
+
+    const segnalazioni = JSON.parse(salvato);
+    bacheca.innerHTML = "";   //svuota la bacheca
+
+    if (segnalazioni.length === 0) {
+        const vuoto = document.createElement("p");
+        vuoto.textContent = "Nessuna segnalazione per ora.";
+        bacheca.appendChild(vuoto);
+        statoBacheca.textContent = "0 segnalazioni";
+        return;
+    }
+
+    segnalazioni.forEach(function (segnalazione) {
+        const riquadro = document.createElement("article");
+        riquadro.className = "segnalazione";
+
+        const info = document.createElement("p");
+        info.className = "segnalazione-info";
+        const autore = document.createElement("strong");
+        autore.textContent = segnalazione.utente;
+        const data = new Date(segnalazione.data).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" });
+        info.appendChild(autore);
+        info.appendChild(document.createTextNode(" · " + segnalazione.stazione + " · " + data));
+
+        const testo = document.createElement("p");
+        testo.textContent = segnalazione.descrizione;   //textContent e non innerHTML: il testo scritto dall'utente non può inserire codice
+
+        riquadro.appendChild(info);
+        riquadro.appendChild(testo);
+        bacheca.appendChild(riquadro);
+    });
+
+    if (segnalazioni.length === 1) {
+        statoBacheca.textContent = "1 segnalazione";
+    } else {
+        statoBacheca.textContent = segnalazioni.length + " segnalazioni";
+    }
+}
+
+aggiornaBacheca();                                       //la disegna appena si apre la pagina
+setInterval(function () {                                //controlla se ci sono novità ogni 3 secondi (polling, come nel textbook)
+    aggiornaBacheca();
+}, 3000);
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {

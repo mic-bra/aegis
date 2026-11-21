@@ -87,3 +87,32 @@ nav a {
     font-weight: bold;
     color: #0b2e59;
 }
+
+.bacheca {
+    background-color: #ffffff;
+    border: 1px solid #d0d7de;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 25px auto;
+    max-height: 400px;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.segnalazione {
+    border-bottom: 1px solid #d0d7de;
+    padding: 10px 0;
+}
+
+.segnalazione:last-child {
+    border-bottom: none;
+}
+
+.segnalazione p {
+    margin: 4px 0;
+}
+
+.segnalazione-info {
+    color: #555555;
+    font-size: 0.9em;
+}
