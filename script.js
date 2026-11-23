@@ -195,13 +195,17 @@ formSegnala.addEventListener("submit", function (event) {
     inputAltro.required = false;
 
     aggiornaBacheca();
-    sezioneSegnala.hidden = true; //mostra subito la bacheca con la nuova segnalazione
+    aggiornaMarker();   //aggiorna i segnaposti sulla mappa
+    if (trovaStazione(nomeStazione) === null) {
+        alert("Segnalazione inviata. Questa stazione non è ancora sulla mappa: la trovi nelle Notizie ma non ha un segnaposto.");
+    }
+    sezioneSegnala.hidden = true; //mostra la bacheca con la nuova segnalazione
     sezioneNotizie.hidden = false;
 });
 
 function aggiornaBacheca() {
     const salvato = localStorage.getItem("segnalazioni") || "[]";
-    if (salvato === ultimoContenuto) return;//nulla di nuovo: non ridisegna
+    if (salvato === ultimoContenuto) return;//nulla di nuovo: non fa niente
     ultimoContenuto = salvato;
 
     const segnalazioni = JSON.parse(salvato);
@@ -242,10 +246,92 @@ function aggiornaBacheca() {
     }
 }
 
-aggiornaBacheca();                                       //la disegna appena si apre la pagina
-setInterval(function () {                                //controlla se ci sono novità ogni 3 secondi (polling, come nel textbook)
+aggiornaBacheca();
+setInterval(function () {
     aggiornaBacheca();
+    aggiornaMarker();
 }, 3000);
+
+const SOGLIA_ARANCIONE = 3;   //+ 3 segnalazioni il segnaposto diventa arancione
+const SOGLIA_ROSSO = 6;       //+ 6 segnalazioni diventa rosso (sotto 3 è giallo)
+let ultimoContenutoMarker = null;
+
+//collega il nome scritto nella segnalazione a una stazione dell'array "stazioni" (null se non la trova)
+function trovaStazione(testo) {
+    const cercato = testo.trim().toLowerCase();
+    if (cercato === "") return null;
+
+    for (let i = 0; i < stazioni.length; i++) { //1) nome identico
+        if (stazioni[i].nome.toLowerCase() === cercato) return stazioni[i];
+    }
+
+    const simili = stazioni.filter(function (stazione) { //2) un solo nome lo contiene ("garibaldi")
+        return stazione.nome.toLowerCase().includes(cercato);
+    });
+    if (simili.length === 1) return simili[0];
+
+    return null; //nessuna stazione, oppure troppo generico (es. "napoli")
+}
+
+function creaIcona(numero) {
+    let colore = "giallo";
+    if (numero >= SOGLIA_ROSSO) {
+        colore = "rosso";
+    } else if (numero >= SOGLIA_ARANCIONE) {
+        colore = "arancione";
+    }
+    return L.divIcon({  //icona disegnata un cerchio colorato col numero dentro
+        className: "segnaposto segnaposto-" + colore,
+        html: String(numero),
+        iconSize: [34, 34],
+        popupAnchor: [0, -18]
+    });
+}
+
+function aggiornaMarker() {
+    const salvato = localStorage.getItem("segnalazioni") || "[]";
+    if (salvato === ultimoContenutoMarker) return;  //non disegna niente se non ci sono novita
+    ultimoContenutoMarker = salvato;
+
+    const segnalazioni = JSON.parse(salvato);
+
+    stazioni.forEach(function (stazione) {
+        stazione.numeroSegnalazioni = 0;  //riparte da zero per ogni stazione
+    });
+
+    segnalazioni.forEach(function (segnalazione) {
+        const stazione = trovaStazione(segnalazione.stazione);
+        if (stazione !== null) {
+            stazione.numeroSegnalazioni++;  //+1
+        }
+    });
+
+    stazioni.forEach(function (stazione) {
+        map.removeLayer(stazione.marker);  //toglie il segnaposto vecchio
+        const numero = stazione.numeroSegnalazioni;
+        let testoPopup = `<strong>${stazione.nome}</strong><br>${stazione.stato}`;
+
+        if (numero === 0) {  //nessuna segnalazione: segnaposto normale
+            stazione.marker = L.marker([stazione.lat, stazione.lng])
+                .addTo(map)
+                .bindPopup(testoPopup);
+        } else {  //almeno una: segnaposto colorato col numero
+            let scritta = numero + " segnalazioni";
+            if (numero === 1) scritta = "1 segnalazione";
+            testoPopup += `<br><strong>${scritta}</strong> degli utenti`;
+
+            stazione.marker = L.marker([stazione.lat, stazione.lng], {
+                icon: creaIcona(numero),
+                title: stazione.nome + ": " + scritta,
+                alt: stazione.nome + ": " + scritta
+            })
+                .addTo(map)
+                .bindPopup(testoPopup);
+        }
+    });
+}
+
+aggiornaMarker();//li disegna appena si apre la pagina
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
