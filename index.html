@@ -45,6 +45,7 @@
                 <datalist id="lista-stazioni"></datalist>
                 <button type="submit">Cerca</button>
             </form>
+            <p id="stato-stazioni" aria-live="polite"></p>   <!--dice quante stazioni sono state caricate-->
 
             <div id="map"></div>
             <p>Legenda delle segnalazioni: 1-2 giallo, 3-5 arancione, 6+ rosso .</p>
@@ -57,9 +58,6 @@
                 <label for="stazione">Seleziona la stazione</label>
                 <select id="stazione" name="stazione" required>
                     <option value="">-- Scegli una stazione --</option>
-                    <option value="garibaldi">Napoli Garibaldi</option>
-                    <option value="toledo">Toledo (Linea 1)</option>
-                    <option value="mergellina">Mergellina</option>
                     <option value="altro">Altro (specifica)</option>
                 </select>
                 <input type="text" id="stazione-altro" name="stazione_altro" placeholder="Scrivi il nome della stazione" hidden>

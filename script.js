@@ -63,70 +63,9 @@ selectStazione.addEventListener("change", function () {
     }
 });
 
-const stazioni = [
-    {
-        nome: "Napoli Garibaldi",
-        lat: 40.8529,
-        lng: 14.2722,
-        stato: "Guasto: ascensore binario 2 fuori servizio"
-    },
-    {
-        nome: "Napoli Gianturco",
-        lat: 40.8535,
-        lng: 14.2878,
-        stato: "Accessibile: rampe e percorsi tattili attivi"
-    },
-    {
-        nome: "Napoli Montesanto",
-        lat: 40.8473,
-        lng: 14.2448,
-        stato: "Attenzione: montascale in manutenzione"
-    },
-    {
-        nome: "Toledo (Linea 1)",
-        lat: 40.8427,
-        lng: 14.2491,
-        stato: "Accessibile: ascensori e rampe attivi"
-    },
-    {
-        nome: "Mergellina",
-        lat: 40.8288,
-        lng: 14.2215,
-        stato: "Accessibile: percorso senza barriere attivo"
-    },
-    {
-        nome: "Roma Termini",
-        lat: 41.9010,
-        lng: 12.5018,
-        stato: "Accessibile: assistenza Sala Blu e ascensori attivi"
-    },
-    {
-        nome: "Milano Centrale",
-        lat: 45.4861,
-        lng: 9.2040,
-        stato: "Guasto: ascensore binario 10 temporaneamente fermo"
-    },
-    {
-        nome: "Firenze Santa Maria Novella",
-        lat: 43.7764,
-        lng: 11.2478,
-        stato: "Accessibile: percorsi a raso e servizi attivi"
-    }
-];
+const stazioni = [];   //si riempie da sola con i dati di OpenStreetMap (vedi in fondo: STAZIONI DA OPENSTREETMAP)
 
 const datalistaStazioni = document.getElementById("lista-stazioni");
-
-stazioni.forEach(function (stazione) {
-    stazione.marker = L.marker([stazione.lat, stazione.lng])
-        .addTo(map)
-        .bindPopup(`<strong>${stazione.nome}</strong><br>${stazione.stato}`);
-
-    if (datalistaStazioni) {
-        const opzione = document.createElement("option");
-        opzione.value = stazione.nome;
-        datalistaStazioni.appendChild(opzione);
-    }
-});
 
 const formRicerca = document.querySelector("#sezione-mappa form");
 const inputRicerca = document.getElementById("cerca-stazione");   //prendere un elemento tramite id
@@ -150,7 +89,7 @@ formRicerca.addEventListener("submit", function (event) {
     }
 
     if (!trovata) {
-        alert("Nessuna stazione trovata. Prova con Garibaldi, Toledo o Mergellina.");
+        alert("Nessuna stazione trovata. Prova a scrivere solo una parte del nome.");
     }
 });
 const formSegnala = document.getElementById("form-segnala");
@@ -307,9 +246,11 @@ function aggiornaMarker() {
     });
 
     stazioni.forEach(function (stazione) {
-        map.removeLayer(stazione.marker);  //toglie il segnaposto vecchio
+        if (stazione.marker) {
+            map.removeLayer(stazione.marker);  //toglie il segnaposto vecchio (se c'è)
+        }
         const numero = stazione.numeroSegnalazioni;
-        let testoPopup = `<strong>${stazione.nome}</strong><br>${stazione.stato}`;
+        let testoPopup = `<strong>${escapi(stazione.nome)}</strong><br>${stazione.stato}<br>${stazione.fonte}`;
 
         if (numero === 0) {  //nessuna segnalazione: segnaposto normale
             stazione.marker = L.marker([stazione.lat, stazione.lng])
@@ -332,6 +273,168 @@ function aggiornaMarker() {
 }
 
 aggiornaMarker();//li disegna appena si apre la pagina
+
+//stazioni api
+const URL_OVERPASS = "https://overpass-api.de/api/interpreter";
+const AREA = "40.78,14.10,40.95,14.40"; //zona di Napoli: sud, ovest, nord, est
+const DURATA_CACHE = 24 * 60 * 60 * 1000;//i dati scaricati restano validi 24 ore (in millisecondi)
+const ANNI_VALIDITA = 3;//un dato più vecchio di 3 anni diventa "sconosciuto"
+const statoStazioni = document.getElementById("stato-stazioni");
+
+//i nomi arrivano da internet: tolgo i simboli che potrebbero diventare codice HTML nel popup
+function escapi(testo) {
+    return testo.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+//1) scarica le stazioni (o le prende dalla copia salvata nel browser)
+async function scaricaElementi() {
+    const salvato = JSON.parse(localStorage.getItem("cacheStazioni"));   //{ elementi, ora } oppure null
+
+    if (salvato !== null && Date.now() - salvato.ora < DURATA_CACHE) {
+        return { elementi: salvato.elementi, ora: salvato.ora, vecchi: false };   //copia recente: nessuna richiesta a internet
+    }
+
+    //tutte le stazioni ferroviarie dell'area, con data di modifica e centro
+    const query = '[out:json][timeout:25][bbox:' + AREA + '];nwr["railway"="station"];out meta center;';
+
+    try {
+        const risposta = await fetch(URL_OVERPASS + "?data=" + encodeURIComponent(query));
+        if (!risposta.ok) throw new Error("Errore HTTP " + risposta.status);
+        const dati = await risposta.json();
+
+        localStorage.setItem("cacheStazioni", JSON.stringify({ elementi: dati.elements, ora: Date.now() }));
+        return { elementi: dati.elements, ora: Date.now(), vecchi: false };
+    } catch (errore) {
+        if (salvato !== null) {
+            return { elementi: salvato.elementi, ora: salvato.ora, vecchi: true };   //internet non va: uso la copia vecchia
+        }
+        throw errore; //non c'è nemmeno quella da errore
+    }
+}
+
+//2) legge il tag "wheelchair" di OpenStreetMap. Se manca o è troppo vecchio : "sconosciuta", mai "accessibile"
+function leggiAccessibilita(tag, timestamp) {
+    const data = new Date(timestamp);
+    let fonte = "Fonte: OpenStreetMap, data di aggiornamento non disponibile";
+    let datoVecchio = true;
+
+    if (!isNaN(data.getTime())) {
+        fonte = "Fonte: OpenStreetMap, aggiornato il " + data.toLocaleDateString("it-IT");
+        datoVecchio = (Date.now() - data.getTime()) > ANNI_VALIDITA * 365 * 24 * 60 * 60 * 1000;
+    }
+
+    if (tag.wheelchair === undefined) {
+        return { livello: "sconosciuta", stato: "Accessibilità sconosciuta (dato assente)", fonte: fonte };
+    }
+    if (datoVecchio) {
+        return { livello: "sconosciuta", stato: "Accessibilità sconosciuta (dato non aggiornato)", fonte: fonte };
+    }
+    if (tag.wheelchair === "yes" || tag.wheelchair === "designated") {
+        return { livello: "si", stato: "Accessibile per sedia a rotelle", fonte: fonte };
+    }
+    if (tag.wheelchair === "limited") {
+        return { livello: "limitata", stato: "Parzialmente accessibile per sedia a rotelle", fonte: fonte };
+    }
+    if (tag.wheelchair === "no") {
+        return { livello: "no", stato: "Non accessibile per sedia a rotelle", fonte: fonte };
+    }
+    return { livello: "sconosciuta", stato: "Accessibilità sconosciuta (valore non riconosciuto)", fonte: fonte };
+}
+
+//3) trasforma un elemento di OpenStreetMap in una stazione, con gli stessi campi di prima
+function creaStazioneDaOsm(elemento) {
+    if (!elemento.tags || !elemento.tags.name) return null; //senza nome non si usa
+
+    let lat = elemento.lat; //i punti hanno lat e lon
+    let lng = elemento.lon;
+    if (lat === undefined && elemento.center) { //le aree hanno il centro
+        lat = elemento.center.lat;
+        lng = elemento.center.lon;
+    }
+    if (lat === undefined || lng === undefined) return null;
+
+    const accessibilita = leggiAccessibilita(elemento.tags, elemento.timestamp);
+    return {
+        nome: elemento.tags.name,
+        lat: lat,
+        lng: lng,
+        accessibilita: accessibilita.livello,
+        stato: accessibilita.stato,
+        fonte: accessibilita.fonte
+    };
+}
+
+//4) riempie il menu a tendina del form "Segnala" con le stazioni caricate
+function riempiMenuStazioni() {
+    const opzioneAltro = selectStazione.querySelector("option[value='altro']");
+    stazioni.forEach(function (stazione) {
+        const opzione = document.createElement("option");
+        opzione.value = stazione.nome;
+        opzione.textContent = stazione.nome;
+        selectStazione.insertBefore(opzione, opzioneAltro); // mette stazionu prima di "Altro"
+    });
+}
+
+//5) mostra le stazioni: suggerimenti della ricerca, menu del form e segnaposti
+function mostraStazioni() {
+    stazioni.sort(function (a, b) {
+        return a.nome.localeCompare(b.nome, "it");//ordine alfabetico
+    });
+
+    stazioni.forEach(function (stazione) {
+        const opzione = document.createElement("option");
+        opzione.value = stazione.nome;
+        datalistaStazioni.appendChild(opzione);
+    });
+
+    riempiMenuStazioni();
+    ultimoContenutoMarker = null; //forza aggiorna Marker a ridisegnare
+    aggiornaMarker();
+}
+
+//6) funzione che mette insieme tutto
+async function caricaStazioni() {
+    statoStazioni.textContent = "Caricamento delle stazioni da OpenStreetMap...";
+
+    try {
+        const risultato = await scaricaElementi();
+
+        risultato.elementi.forEach(function (elemento) {
+            const nuova = creaStazioneDaOsm(elemento);
+            if (nuova === null) return;
+
+            const giaPresente = stazioni.find(function (stazione) {    //stessa stazione scritta due volte
+                return stazione.nome.toLowerCase() === nuova.nome.toLowerCase();
+            });
+
+            if (giaPresente === undefined) {
+                stazioni.push(nuova);
+            } else if (giaPresente.accessibilita === "sconosciuta" && nuova.accessibilita !== "sconosciuta") {
+                Object.assign(giaPresente, nuova);// mantengo quella con più informazioni
+            }
+        });
+
+        if (stazioni.length === 0) {
+            statoStazioni.textContent = "Nessuna stazione trovata in questa zona.";
+            return;
+        }
+
+        mostraStazioni();
+
+        const conDato = stazioni.filter(function (stazione) {
+            return stazione.accessibilita !== "sconosciuta";
+        }).length;
+        let messaggio = stazioni.length + " stazioni caricate da OpenStreetMap, " + conDato + " con accessibilità nota.";
+        if (risultato.vecchi) {
+            messaggio += " Internet non disponibile: copia salvata il " + new Date(risultato.ora).toLocaleDateString("it-IT") + ".";
+        }
+        statoStazioni.textContent = messaggio;
+    } catch (errore) {
+        statoStazioni.textContent = "Impossibile caricare le stazioni. Riprova più tardi.";
+    }
+}
+
+caricaStazioni();//parte quando si apre la pagina
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
