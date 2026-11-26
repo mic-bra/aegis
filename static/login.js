@@ -1,6 +1,6 @@
 //cerca utente con la mail e password inseriti nel campo.
 //se non lo trova da messaggio di errore (non specifica cosa è sbagliato)
-//se l'operazione avviene con successo si va a conferma.html
+//se l'operazione avviene con successo si va a conferma
 
 const formLogin = document.getElementById("form-login");
 const messaggioErrore = document.getElementById("messaggio-errore");
@@ -34,5 +34,5 @@ formLogin.addEventListener("submit", function (event) {
         email: utenteTrovato.email
     }));
 
-    window.location.href = "conferma.html";
+    window.location.href = "/conferma";
 });
