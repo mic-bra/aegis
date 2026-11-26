@@ -52,13 +52,16 @@ linkNotizie.addEventListener("click", function (event) {
 
 const selectStazione = document.getElementById("stazione");
 const inputAltro = document.getElementById("stazione-altro");
+const labelAltro = document.getElementById("label-stazione-altro");
 
 selectStazione.addEventListener("change", function () {
     if (selectStazione.value === "altro") {
         inputAltro.hidden = false;
+        labelAltro.hidden = false;
         inputAltro.required = true;
     } else {
         inputAltro.hidden = true;
+        labelAltro.hidden = true;
         inputAltro.required = false;
     }
 });
@@ -136,6 +139,7 @@ formSegnala.addEventListener("submit", function (event) {
 
     formSegnala.reset();//svuota il form
     inputAltro.hidden = true;
+    labelAltro.hidden = true;
     inputAltro.required = false;
 
     aggiornaBacheca();
@@ -275,6 +279,7 @@ function aggiornaMarker() {
                 .bindPopup(testoPopup);
         }
     });
+    aggiornaListaStazioniUI();
 }
 
 aggiornaMarker();//li disegna appena si apre la pagina
@@ -379,6 +384,39 @@ function riempiMenuStazioni() {
         selectStazione.insertBefore(opzione, opzioneAltro); // mette stazionu prima di "Altro"
     });
 }
+    const listaStazioniUI = document.getElementById("lista-stazioni-ui");
+
+function aggiornaListaStazioniUI() {
+    if (!listaStazioniUI) return;
+    listaStazioniUI.innerHTML = ""; // svuota la lista prima di ridisegnarla
+
+    stazioni.forEach(function (stazione) {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.type = "button";
+
+        const nome = document.createElement("strong");
+        nome.textContent = stazione.nome;
+
+        const badge = document.createElement("span");
+        const num = stazione.numeroSegnalazioni || 0;
+        badge.textContent = num === 1 ? "1 segnalazione" : num + " segnalazioni";
+
+        btn.appendChild(nome);
+        btn.appendChild(badge);
+
+        // Al click sull'elenco testuale, centra la mappa e apre il popup
+        btn.addEventListener("click", function () {
+            map.setView([stazione.lat, stazione.lng], 16);
+            if (stazione.marker) {
+                stazione.marker.openPopup();
+            }
+        });
+
+        li.appendChild(btn);
+        listaStazioniUI.appendChild(li);
+    });
+}
 
 //5) mostra le stazioni: suggerimenti della ricerca, menu del form e segnaposti
 function mostraStazioni() {
@@ -395,59 +433,60 @@ function mostraStazioni() {
     riempiMenuStazioni();
     ultimoContenutoMarker = null; //forza aggiorna Marker a ridisegnare
     aggiornaMarker();
+    aggiornaListaStazioniUI();
 }
 
 //6) funzione che mette insieme tutto
-async function caricaStazioni() {
-    statoStazioni.textContent = "Caricamento delle stazioni da OpenStreetMap, non riavviare la pagina...";
+    async function caricaStazioni() {
+        statoStazioni.textContent = "Caricamento delle stazioni da OpenStreetMap, non riavviare la pagina...";
 
-    try {
-        const risultato = await scaricaElementi();
+        try {
+            const risultato = await scaricaElementi();
 
-        risultato.elementi.forEach(function (elemento) {
-            const nuova = creaStazioneDaOsm(elemento);
-            if (nuova === null) return;
+            risultato.elementi.forEach(function (elemento) {
+                const nuova = creaStazioneDaOsm(elemento);
+                if (nuova === null) return;
 
-            const giaPresente = stazioni.find(function (stazione) {    //stessa stazione scritta due volte
-                return stazione.nome.toLowerCase() === nuova.nome.toLowerCase();
+                const giaPresente = stazioni.find(function (stazione) {    //stessa stazione scritta due volte
+                    return stazione.nome.toLowerCase() === nuova.nome.toLowerCase();
+                });
+
+                if (giaPresente === undefined) {
+                    stazioni.push(nuova);
+                } else if (giaPresente.accessibilita === "sconosciuta" && nuova.accessibilita !== "sconosciuta") {
+                    Object.assign(giaPresente, nuova);// mantengo quella con più informazioni
+                }
             });
 
-            if (giaPresente === undefined) {
-                stazioni.push(nuova);
-            } else if (giaPresente.accessibilita === "sconosciuta" && nuova.accessibilita !== "sconosciuta") {
-                Object.assign(giaPresente, nuova);// mantengo quella con più informazioni
+            if (stazioni.length === 0) {
+                statoStazioni.textContent = "Nessuna stazione trovata in questa zona.";
+                return;
+            }
+
+            mostraStazioni();
+
+            const conDato = stazioni.filter(function (stazione) {
+                return stazione.accessibilita !== "sconosciuta";
+            }).length;
+            let messaggio = stazioni.length + " stazioni caricate da OpenStreetMap, " + conDato + " con accessibilità nota.";
+            if (risultato.vecchi) {
+                messaggio += " Internet non disponibile: copia salvata il " + new Date(risultato.ora).toLocaleDateString("it-IT") + ".";
+            }
+            statoStazioni.textContent = messaggio;
+        } catch (errore) {
+            statoStazioni.textContent = "Impossibile caricare le stazioni. Riprova più tardi.";
+        }
+    }
+
+    caricaStazioni();//parte quando si apre la pagina
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+            try {
+                await navigator.serviceWorker.register('/sw.js');
+                console.log('Service Worker registrato con successo');
+            } catch (errore) {
+                console.error('Errore nella registrazione del Service Worker:', errore);
             }
         });
-
-        if (stazioni.length === 0) {
-            statoStazioni.textContent = "Nessuna stazione trovata in questa zona.";
-            return;
-        }
-
-        mostraStazioni();
-
-        const conDato = stazioni.filter(function (stazione) {
-            return stazione.accessibilita !== "sconosciuta";
-        }).length;
-        let messaggio = stazioni.length + " stazioni caricate da OpenStreetMap, " + conDato + " con accessibilità nota.";
-        if (risultato.vecchi) {
-            messaggio += " Internet non disponibile: copia salvata il " + new Date(risultato.ora).toLocaleDateString("it-IT") + ".";
-        }
-        statoStazioni.textContent = messaggio;
-    } catch (errore) {
-        statoStazioni.textContent = "Impossibile caricare le stazioni. Riprova più tardi.";
-    }
-}
-
-caricaStazioni();//parte quando si apre la pagina
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      await navigator.serviceWorker.register('/sw.js');
-      console.log('Service Worker registrato con successo');
-    } catch (errore) {
-      console.error('Errore nella registrazione del Service Worker:', errore);
-    }
-  });
 }
