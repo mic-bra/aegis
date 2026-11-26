@@ -47,7 +47,7 @@ linkNotizie.addEventListener("click", function (event) {
     sezioneMappa.hidden = true;
     sezioneSegnala.hidden = true;
     sezioneNotizie.hidden = false;
-    aggiornaBacheca();   //aggiorna subito la bacheca
+    aggiornaBacheca();   //aggiorna la bacheca
 });
 
 const selectStazione = document.getElementById("stazione");
@@ -63,7 +63,7 @@ selectStazione.addEventListener("change", function () {
     }
 });
 
-const stazioni = [];   //si riempie da sola con i dati di OpenStreetMap (vedi in fondo: STAZIONI DA OPENSTREETMAP)
+const stazioni = [];   //si riempie con i dati di OpenStreetMap
 
 const datalistaStazioni = document.getElementById("lista-stazioni");
 
@@ -118,12 +118,17 @@ formSegnala.addEventListener("submit", function (event) {
     const descrizione = textareaDescrizione.value.trim();
     if (nomeStazione === "" || descrizione === "") return;
 
-    const nuovaSegnalazione = {
-        utente: utenteLoggato.nome + " " + utenteLoggato.cognome.charAt(0) + ".",
-        stazione: nomeStazione,
-        descrizione: descrizione,
-        data: Date.now()      //data e ora in millisecondi
-    };
+        let autore = utenteLoggato.nome;
+        if (utenteLoggato.cognome) {
+            autore = autore + " " + utenteLoggato.cognome.charAt(0) + ".";
+        }
+
+        const nuovaSegnalazione = {
+            utente : autore,
+            stazione: nomeStazione,
+            descrizione: descrizione,
+            data: Date.now() //data e ora in millisecondi
+        };
 
     const segnalazioni = JSON.parse(localStorage.getItem("segnalazioni")) || [];
     segnalazioni.unshift(nuovaSegnalazione); //unshift = la mette per prima
@@ -394,7 +399,7 @@ function mostraStazioni() {
 
 //6) funzione che mette insieme tutto
 async function caricaStazioni() {
-    statoStazioni.textContent = "Caricamento delle stazioni da OpenStreetMap...";
+    statoStazioni.textContent = "Caricamento delle stazioni da OpenStreetMap, non riavviare la pagina...";
 
     try {
         const risultato = await scaricaElementi();
@@ -439,7 +444,7 @@ caricaStazioni();//parte quando si apre la pagina
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      await navigator.serviceWorker.register('./sw.js');
+      await navigator.serviceWorker.register('/sw.js');
       console.log('Service Worker registrato con successo');
     } catch (errore) {
       console.error('Errore nella registrazione del Service Worker:', errore);
