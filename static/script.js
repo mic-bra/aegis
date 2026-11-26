@@ -52,13 +52,16 @@ linkNotizie.addEventListener("click", function (event) {
 
 const selectStazione = document.getElementById("stazione");
 const inputAltro = document.getElementById("stazione-altro");
+const labelAltro = document.getElementById("label-stazione-altro");
 
 selectStazione.addEventListener("change", function () {
     if (selectStazione.value === "altro") {
         inputAltro.hidden = false;
+        if (labelAltro) labelAltro.hidden = false;
         inputAltro.required = true;
     } else {
         inputAltro.hidden = true;
+        if (labelAltro) labelAltro.hidden = true;
         inputAltro.required = false;
     }
 });
@@ -92,6 +95,7 @@ formRicerca.addEventListener("submit", function (event) {
         alert("Nessuna stazione trovata. Prova a scrivere solo una parte del nome.");
     }
 });
+
 const formSegnala = document.getElementById("form-segnala");
 const textareaDescrizione = document.getElementById("descrizione");
 const avvisoAccesso = document.getElementById("avviso-accesso");
@@ -118,17 +122,17 @@ formSegnala.addEventListener("submit", function (event) {
     const descrizione = textareaDescrizione.value.trim();
     if (nomeStazione === "" || descrizione === "") return;
 
-        let autore = utenteLoggato.nome;
-        if (utenteLoggato.cognome) {
-            autore = autore + " " + utenteLoggato.cognome.charAt(0) + ".";
-        }
+    let autore = utenteLoggato.nome;
+    if (utenteLoggato.cognome) {
+        autore = autore + " " + utenteLoggato.cognome.charAt(0) + ".";
+    }
 
-        const nuovaSegnalazione = {
-            utente : autore,
-            stazione: nomeStazione,
-            descrizione: descrizione,
-            data: Date.now() //data e ora in millisecondi
-        };
+    const nuovaSegnalazione = {
+        utente: autore,
+        stazione: nomeStazione,
+        descrizione: descrizione,
+        data: Date.now() //data e ora in millisecondi
+    };
 
     const segnalazioni = JSON.parse(localStorage.getItem("segnalazioni")) || [];
     segnalazioni.unshift(nuovaSegnalazione); //unshift = la mette per prima
@@ -136,6 +140,7 @@ formSegnala.addEventListener("submit", function (event) {
 
     formSegnala.reset();//svuota il form
     inputAltro.hidden = true;
+    if (labelAltro) labelAltro.hidden = true;
     inputAltro.required = false;
 
     aggiornaBacheca();
@@ -275,6 +280,7 @@ function aggiornaMarker() {
                 .bindPopup(testoPopup);
         }
     });
+    aggiornaListaStazioniUI();
 }
 
 aggiornaMarker();//li disegna appena si apre la pagina
@@ -380,6 +386,40 @@ function riempiMenuStazioni() {
     });
 }
 
+const listaStazioniUI = document.getElementById("lista-stazioni-ui");
+
+function aggiornaListaStazioniUI() {
+    if (!listaStazioniUI) return;
+    listaStazioniUI.innerHTML = ""; // svuota la lista prima di ridisegnarla
+
+    stazioni.forEach(function (stazione) {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.type = "button";
+
+        const nome = document.createElement("strong");
+        nome.textContent = stazione.nome;
+
+        const badge = document.createElement("span");
+        const num = stazione.numeroSegnalazioni || 0;
+        badge.textContent = num === 1 ? "1 segnalazione" : num + " segnalazioni";
+
+        btn.appendChild(nome);
+        btn.appendChild(badge);
+
+        // Al click sull'elenco testuale, centra la mappa e apre il popup
+        btn.addEventListener("click", function () {
+            map.setView([stazione.lat, stazione.lng], 16);
+            if (stazione.marker) {
+                stazione.marker.openPopup();
+            }
+        });
+
+        li.appendChild(btn);
+        listaStazioniUI.appendChild(li);
+    });
+}
+
 //5) mostra le stazioni: suggerimenti della ricerca, menu del form e segnaposti
 function mostraStazioni() {
     stazioni.sort(function (a, b) {
@@ -395,6 +435,7 @@ function mostraStazioni() {
     riempiMenuStazioni();
     ultimoContenutoMarker = null; //forza aggiorna Marker a ridisegnare
     aggiornaMarker();
+    aggiornaListaStazioniUI();
 }
 
 //6) funzione che mette insieme tutto
@@ -442,12 +483,12 @@ async function caricaStazioni() {
 caricaStazioni();//parte quando si apre la pagina
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      await navigator.serviceWorker.register('/sw.js');
-      console.log('Service Worker registrato con successo');
-    } catch (errore) {
-      console.error('Errore nella registrazione del Service Worker:', errore);
-    }
-  });
+    window.addEventListener('load', async () => {
+        try {
+            await navigator.serviceWorker.register('/sw.js');
+            console.log('Service Worker registrato con successo');
+        } catch (errore) {
+            console.error('Errore nella registrazione del Service Worker:', errore);
+        }
+    });
 }

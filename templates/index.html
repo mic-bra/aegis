@@ -37,43 +37,53 @@
             </div>
         </section>
 
-        <section id="sezione-mappa" hidden>
-            <h2>Mappa e stato dell'accessibilità</h2>
-            <form method="GET">
-                <label for="cerca-stazione">Cerca stazione o fermata</label>
-                <input type="search" id="cerca-stazione" name="q" list="lista-stazioni" placeholder="Es. Napoli Garibaldi" autocomplete="off">
-                <datalist id="lista-stazioni"></datalist>
-                <button type="submit">Cerca</button>
-            </form>
-            <p id="stato-stazioni" aria-live="polite"></p>   <!--dice quante stazioni sono state caricate-->
+        <div class="dashboard-layout">
+            <aside class="sidebar-pannello">
+                <section id="sezione-mappa">
+                    <h2>Mappa e stato dell'accessibilità</h2>
+                    <form method="GET">
+                        <label for="cerca-stazione">Cerca stazione o fermata</label>
+                        <input type="search" id="cerca-stazione" name="q" list="lista-stazioni" placeholder="Es. Napoli Garibaldi" autocomplete="off">
+                        <datalist id="lista-stazioni"></datalist>
+                        <button type="submit">Cerca</button>
+                    </form>
+                    <p id="stato-stazioni" aria-live="polite"></p>   <!--dice quante stazioni sono state caricate-->
+                    <ul id="lista-stazioni-ui" aria-label="Elenco testuale delle stazioni"></ul>
+                </section>
 
-            <div id="map"></div>
-            <p>Legenda delle segnalazioni: 1-2 giallo, 3-5 arancione, 6+ rosso .</p>
-        </section>
+                <section id="sezione-segnala" hidden>
+                    <h2>Segnala un guasto o una barriera</h2>
+                    <p id="avviso-accesso" hidden>Per inviare una segnalazione devi <a href="/login">accedere</a> o <a href="/register">registrarti</a>.</p>
+                    <form id="form-segnala" method="POST">
+                        <label for="stazione">Seleziona la stazione</label>
+                        <select id="stazione" name="stazione" required>
+                            <option value="">-- Scegli una stazione --</option>
+                            <option value="altro">Altro (specifica)</option>
+                        </select>
+                        <label for="stazione-altro" id="label-stazione-altro" hidden>Nome della stazione</label>
+                        <input type="text" id="stazione-altro" name="stazione_altro" placeholder="Scrivi il nome della stazione" hidden>
 
-        <section id="sezione-segnala" hidden>
-            <h2>Segnala un guasto o una barriera</h2>
-            <p id="avviso-accesso" hidden>Per inviare una segnalazione devi <a href="/login">accedere</a> o <a href="/register">registrarti</a>.</p>
-            <form id="form-segnala" method="POST">
-                <label for="stazione">Seleziona la stazione</label>
-                <select id="stazione" name="stazione" required>
-                    <option value="">-- Scegli una stazione --</option>
-                    <option value="altro">Altro (specifica)</option>
-                </select>
-                <input type="text" id="stazione-altro" name="stazione_altro" placeholder="Scrivi il nome della stazione" hidden>
+                        <label for="descrizione">Descrizione del problema</label>
+                        <textarea id="descrizione" name="descrizione" required></textarea>
 
-                <label for="descrizione">Descrizione del problema</label>
-                <textarea id="descrizione" name="descrizione" required></textarea>
+                        <button type="submit" id="btn-invia">Invia segnalazione</button>
+                    </form>
+                </section>
 
-                <button type="submit" id="btn-invia">Invia segnalazione</button>
-            </form>
-        </section>
+                <section id="sezione-notizie" hidden>
+                    <h2>Notizie dalla community</h2>
+                    <p id="stato-bacheca" aria-live="polite"></p>   <!--quante segnalazioni ci sono-->
+                    <div id="bacheca" class="bacheca" tabindex="0" aria-label="Bacheca delle segnalazioni"></div>
+                </section>
+            </aside>
 
-        <section id="sezione-notizie" hidden>
-            <h2>Notizie dalla community</h2>
-            <p id="stato-bacheca" aria-live="polite"></p>   <!--quante segnalazioni ci sono-->
-            <div id="bacheca" class="bacheca" tabindex="0" aria-label="Bacheca delle segnalazioni"></div>
-        </section>
+            <section class="area-mappa" aria-label="Mappa interattiva">
+                <div id="map" role="application"
+                     aria-label="Mappa interattiva dell'accessibilità delle stazioni">
+                </div>
+                <p><strong>Legenda delle segnalazioni:</strong> 1-2 giallo, 3-5 arancione, 6+ rosso.</p>
+            </section>
+        </div>
     </main>
 
     <footer>

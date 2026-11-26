@@ -113,7 +113,7 @@ nav a {
 }
 
 .segnalazione-info {
-    color: #676967;
+    color: #676767;
     font-size: 0.9em;
 }
 
@@ -141,4 +141,66 @@ nav a {
 .segnaposto-rosso {
     background-color: #ff0000;
     color: #ffffff;
+}
+
+*, *::before, *::after {     /*applica border-box ad ogni elemento*/
+    box-sizing: border-box;
+}
+
+.dashboard-layout {
+    display: grid;                       /*griglia bidimensionale*/
+    grid-template-columns: 380px 1fr;
+    gap: 24px;
+    align-items: start;
+    margin: 24px 0;
+    text-align: left;
+}
+
+.sidebar-pannello,
+.area-mappa {
+    background-color: #ffffff;
+    border: 1px solid #d0d7de;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+#lista-stazioni-ui {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 0;
+    max-height: 280px;
+    overflow-y: auto;
+    border-top: 1px solid #d0d7de;
+}
+
+#lista-stazioni-ui button {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 10px 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #0b2e59;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#lista-stazioni-ui button:hover,
+#lista-stazioni-ui button:focus-visible {
+    background-color: #eef4fb;
+    outline: 2px solid #0b2e59;
+    outline-offset: -2px;
+}
+
+@media (max-width: 768px) {
+    .dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+
+    #map {
+        height: 350px;
+    }
 }
