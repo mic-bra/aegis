@@ -69,6 +69,7 @@ selectStazione.addEventListener("change", function () {
 const stazioni = [];   //si riempie con i dati di OpenStreetMap
 
 const datalistaStazioni = document.getElementById("lista-stazioni");
+const listaStazioniUI = document.getElementById("lista-stazioni-ui");
 
 const formRicerca = document.querySelector("#sezione-mappa form");
 const inputRicerca = document.getElementById("cerca-stazione");   //prendere un elemento tramite id
@@ -385,8 +386,6 @@ function riempiMenuStazioni() {
         selectStazione.insertBefore(opzione, opzioneAltro); // mette stazionu prima di "Altro"
     });
 }
-
-const listaStazioniUI = document.getElementById("lista-stazioni-ui");
 
 function aggiornaListaStazioniUI() {
     if (!listaStazioniUI) return;
