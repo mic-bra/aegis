@@ -1,7 +1,12 @@
-from flask import Flask, render_template, send_from_directory
+import json
+import os
+import urllib.request
+import urllib.parse
+from flask import Flask, render_template, send_from_directory, jsonify
+
+CACHE_STAZIONI = 'cache-stazioni'
 
 app = Flask(__name__)
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -29,6 +34,36 @@ def manifest():
 @app.route('/sw.js')
 def service_worker():
     return send_from_directory('.', 'sw.js', mimetype='application/javascript')
+
+@app.route('/api/stazioni', methods=['GET'])
+def get_stazioni():
+    if os.path.exists(CACHE_STAZIONI):
+        with open(CACHE_STAZIONI, 'r', encoding="utf-8") as f:
+            return jsonify(json.load(f))
+
+    query=""" 
+    [out:json][timout:25];
+    area["name"="Napoli"]->.searchArea;
+    (
+    node["railway"="station"](area.searchArea);
+    node["railway"="subway_entrance"](area.searchArea);
+    node["public_transport"="station"](area.searchArea);
+    );
+    out body;
+    """
+    url = "https://overpass-api.de/api/interpreter"
+    data = urllib.parse.urlencode({"data":query}).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers={'User-Agent':"Aegis-App/1.0"})
+
+    try:
+        with urllib.request.urlopen(req, timeout=25) as response:
+            risultato = json.loads(response.read().decode("utf-8"))
+            with open(CACHE_STAZIONI, 'w', encoding="utf-8") as f:
+                json.dump(risultato, f, ensure_ascii=False)
+        return jsonify(risultato)
+    except Exception as e:
+        return jsonify({"errore": str(e)}), 502
+
 
 if __name__ == '__main__':
     app.run(debug=True)
