@@ -306,11 +306,8 @@ async function scaricaElementi() {
         return { elementi: salvato.elementi, ora: salvato.ora, vecchi: false };   //copia recente: nessuna richiesta a internet
     }
 
-    //tutte le stazioni ferroviarie dell'area, con data di modifica e centro
-    const query = '[out:json][timeout:25][bbox:' + AREA + '];nwr["railway"="station"];out meta center;';
-
     try {
-        const risposta = await fetch(URL_OVERPASS + "?data=" + encodeURIComponent(query));
+        const risposta = await fetch("/api/stazioni");
         if (!risposta.ok) throw new Error("Errore HTTP " + risposta.status);
         const dati = await risposta.json();
 

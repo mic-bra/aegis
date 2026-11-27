@@ -4,7 +4,7 @@ import urllib.request
 import urllib.parse
 from flask import Flask, render_template, send_from_directory, jsonify
 
-CACHE_STAZIONI = 'cache-stazioni'
+CACHE_STAZIONI = 'cache_stazioni.json'
 
 app = Flask(__name__)
 @app.route('/')
@@ -41,15 +41,10 @@ def get_stazioni():
         with open(CACHE_STAZIONI, 'r', encoding="utf-8") as f:
             return jsonify(json.load(f))
 
-    query=""" 
-    [out:json][timout:25];
-    area["name"="Napoli"]->.searchArea;
-    (
-    node["railway"="station"](area.searchArea);
-    node["railway"="subway_entrance"](area.searchArea);
-    node["public_transport"="station"](area.searchArea);
-    );
-    out body;
+    query = """
+    [out:json][timeout:25][bbox:40.78,14.13,40.92,14.35];
+    nwr["railway"="station"];
+    out meta center;
     """
     url = "https://overpass-api.de/api/interpreter"
     data = urllib.parse.urlencode({"data":query}).encode("utf-8")
